@@ -1,7 +1,7 @@
 import socket
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("127.0.0.1", 8675))
+s.connect(("127.0.0.1", 5988))
 
 while True:
     board = s.recv(2048).decode("utf-8")

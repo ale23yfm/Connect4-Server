@@ -1,7 +1,8 @@
 <?php
 $sock = socket_create(AF_INET,SOCK_STREAM,0);
-socket_connect($sock,"127.0.0.1",8675);
-
+if (!socket_connect($sock, "127.0.0.1", 5988)) {
+    die("connect failed: " . socket_strerror(socket_last_error($sock)) . "\n");
+}
 while (true) {
     $n = socket_recv($sock, $buf, 2048, 0);
     if ($n === false || $n === 0) {
