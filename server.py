@@ -5,18 +5,28 @@ from domain.board import Board
 from service.game import GameService
 from errors.errors import InvalidColumn, ColumnFullError, GameServiceError
 
+from http import HTTPStatus
+from pathlib import Path
+
+INDEX = Path(__file__).with_name("index.html").read_text(encoding="utf-8")
 
 def render(board, message=""):
     text = "1 2 3 4 5 6 7\n" + str(board)
     return (message + "\n" + text) if message else text
 
-
 async def run_game(ws):
     print("Connected")
     board = Board()
     service = GameService(board)
-
     try:
+        await ws.send("Choose mode (ALGORITHM or AI):")
+        while True:
+            data = (await ws.recv()).strip().upper()
+            if data in ("ALGORITHM", "AI"):
+                mode = data
+                break
+            await ws.send("Invalid mode. Choose mode (ALGORITHM or AI):")
+
         await ws.send("Choose a piece (X or O):")
         while True:
             data = await ws.recv()
@@ -57,10 +67,15 @@ async def run_game(ws):
     except ConnectionClosed:
         print("Client dropped")
 
+async def process_request(connection, request):
+    if request.headers.get("Upgrade", "").lower() != "websocket":
+        response = connection.respond(HTTPStatus.OK, INDEX)
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        return response
 
 async def main():
     port = int(os.environ.get("PORT", 5988))
-    async with serve(run_game, "0.0.0.0", port):
+    async with serve(run_game, "0.0.0.0", port, process_request=process_request):
         print("Server is waiting for connections...")
         await asyncio.Future()
 
