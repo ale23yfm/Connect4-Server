@@ -8,7 +8,12 @@ from errors.errors import InvalidColumn, ColumnFullError, GameServiceError
 from http import HTTPStatus
 from pathlib import Path
 
-INDEX = Path(__file__).with_name("index.html").read_text(encoding="utf-8")
+BASE = Path(__file__).parent
+FILES = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+    "/script.js": ("script.js", "application/javascript; charset=utf-8"),
+}
 
 def render(board, message=""):
     text = "1 2 3 4 5 6 7\n" + str(board)
@@ -68,10 +73,15 @@ async def run_game(ws):
         print("Client dropped")
 
 async def process_request(connection, request):
-    if request.headers.get("Upgrade", "").lower() != "websocket":
-        response = connection.respond(HTTPStatus.OK, INDEX)
-        response.headers["Content-Type"] = "text/html; charset=utf-8"
+    if request.headers.get("Upgrade", "").lower() == "websocket":
+        return None  # let WebSocket connections through
+    path = request.path.split("?")[0]
+    if path in FILES:
+        name, ctype = FILES[path]
+        response = connection.respond(HTTPStatus.OK, (BASE / name).read_text(encoding="utf-8"))
+        response.headers["Content-Type"] = ctype
         return response
+    return connection.respond(HTTPStatus.NOT_FOUND, "Not found\n")
 
 async def main():
     port = int(os.environ.get("PORT", 5988))

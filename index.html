@@ -1,51 +1,17 @@
 <!doctype html>
-<html>
+<html lang="">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connect 4</title>
-<style>
-  body { font-family: sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; }
-  pre { background: #111; color: #eee; padding: 1rem; font-size: 1.3rem;
-        min-height: 14rem; white-space: pre-wrap; }
-  button { font-size: 1.1rem; padding: .4rem .8rem; margin: .15rem; }
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connect 4</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
 </head>
 <body>
-<h2>Connect 4</h2>
-<pre id="out">Connecting… (the server can take up to a minute to wake up)</pre>
-
-<div id="mode">
-  <button onclick="pick('ALGORITHM')">Play with algorithm</button>
-  <button onclick="pick('AI')">Play with AI</button>
-</div>
-
-<div id="game" style="display:none">
-  <div>Piece: <button onclick="send('X')">X</button><button onclick="send('O')">O</button></div>
-  <div id="cols">Column: </div>
-</div>
-
-<script>
-const out = document.getElementById('out');
-const cols = document.getElementById('cols');
-for (let i = 1; i <= 7; i++) {
-  const b = document.createElement('button');
-  b.textContent = i;
-  b.onclick = () => send(String(i));
-  cols.appendChild(b);
-}
-
-const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-ws.onmessage = e => { out.textContent = e.data; };
-ws.onclose = () => { out.textContent += '\n\nDisconnected. Refresh to play again.'; };
-
-function send(text) { if (ws.readyState === 1) ws.send(text); }
-
-function pick(mode) {
-  send(mode);
-  document.getElementById('mode').style.display = 'none';
-  document.getElementById('game').style.display = 'block';
-}
-</script>
+<h1>Connect 4</h1>
+<div id="status">Connecting… (the server can take up to a minute to wake up)</div>
+<div id="you"></div>
+<div id="board"></div>
+<div id="controls"></div>
 </body>
 </html>
