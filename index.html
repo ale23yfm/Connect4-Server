@@ -1,32 +1,11 @@
 <!doctype html>
-<html>
+<html lang="">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connect 4</title>
-<style>
-  :root { --bg:#350f0c; --red:#5b1814; --sand:#e1c78d; --dark:#132a32; --blue:#2b5263; }
-  * { box-sizing: border-box; }
-  body { margin:0; min-height:100vh; background:var(--dark); color:var(--sand);
-         font-family: system-ui, sans-serif; display:flex; flex-direction:column;
-         align-items:center; padding:1.5rem 1rem; }
-  h1 { margin:.2rem 0 1rem; letter-spacing:.15em; text-transform:uppercase; }
-  #status { min-height:3.2rem; text-align:center; white-space:pre-line; margin-bottom:1rem;
-            background:var(--dark); border-radius:10px; padding:.7rem 1.2rem; max-width:420px; width:100%; }
-  #board { background:var(--blue); padding:12px; border-radius:14px; display:grid; gap:8px;
-           grid-template-columns:repeat(7, 1fr); width:100%; max-width:420px;
-           box-shadow:0 8px 0 var(--dark); }
-  .cell { aspect-ratio:1; border-radius:50%; background:var(--dark); border:3px solid var(--dark); }
-  .cell.x { background:var(--sand); border-color:var(--red); }
-  .cell.o { background:var(--red); border-color:var(--sand); }
-  #controls { margin-top:1.2rem; display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; max-width:420px; }
-  button { font-size:1.05rem; padding:.55rem 1rem; border:2px solid var(--sand); border-radius:8px;
-           background:var(--red); color:var(--sand); cursor:pointer; font-weight:600; }
-  button:hover { background:var(--sand); color:var(--bg); }
-  .legend { margin-top:1rem; font-size:.9rem; opacity:.85; display:flex; gap:1rem; align-items:center; }
-  .dot { display:inline-block; width:14px; height:14px; border-radius:50%; vertical-align:middle; margin-right:.3rem; border:2px solid var(--sand); }
-    #you { min-height:1.6rem; margin-bottom:.8rem; font-weight:600;     }
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connect 4</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
 </head>
 <body>
 <h1>Connect 4</h1>
@@ -34,79 +13,5 @@
 <div id="you"></div>
 <div id="board"></div>
 <div id="controls"></div>
-<div class="legend">
-<!--  <span><span class="dot" style="background:var(&#45;&#45;sand)"></span>X</span>-->
-<!--  <span><span class="dot" style="background:var(&#45;&#45;red)"></span>O</span>-->
-</div>
-
-<script>
-const statusEl = document.getElementById('status');
-const boardEl = document.getElementById('board');
-const controls = document.getElementById('controls');
-
-const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-
-const youEl = document.getElementById('you');
-
-function choosePiece(p) {
-  send(p);
-  const beige = p === 'X';
-  youEl.innerHTML =
-    '<span class="dot" style="background:' + (beige ? 'var(--sand)' : 'var(--red)') + '"></span>' +
-    'You are the ' + (beige ? 'beige' : 'red') + ' player (' + p + ')';
-}
-
-function send(t) { if (ws.readyState === 1) ws.send(t); }
-
-function setButtons(items) {
-  controls.innerHTML = '';
-  items.forEach(([label, value, fn]) => {
-    const b = document.createElement('button');
-    b.textContent = label;
-    b.onclick = fn || (() => send(value));
-    controls.appendChild(b);
-  });
-}
-
-function drawBoard(rows) {
-  boardEl.innerHTML = '';
-  rows.forEach(r => [...r].forEach(ch => {
-    const c = document.createElement('div');
-    const u = ch.toUpperCase();
-    c.className = 'cell' + (u === 'X' ? ' x' : u === 'O' ? ' o' : '');
-    boardEl.appendChild(c);
-  }));
-}
-
-ws.onmessage = e => {
-  const text = e.data;
-  const rows = [], info = [];
-  text.split('\n').forEach(line => {
-    const t = line.replace(/[|\s]/g, '');
-    if (!t) return;
-    if (/^[1-7]+$/.test(t)) return;          // header "1 2 3 4 5 6 7"
-    if (t.length === 7) rows.push(t);        // board row
-    else info.push(line.trim());
-  });
-  if (rows.length >= 4) drawBoard(rows);
-  statusEl.textContent = info.join('\n') || text;
-
-  if (text.includes('Choose mode')) {
-    setButtons([['Play with algorithm', 'ALGORITHM'], ['Play with AI', 'AI']]);
-  } else if (text.includes('Choose a piece')) {
-    setButtons([['Play beige', null, () => choosePiece('X')],
-            ['Play red',   null, () => choosePiece('O')]]);
-  } else if (text.includes('Game over')) {
-    setButtons([['Play again', null, () => location.reload()]]);
-  } else if (text.includes('Choose a column')) {
-    setButtons([1,2,3,4,5,6,7].map(i => [String(i), String(i)]));
-  }
-};
-
-ws.onclose = () => {
-  statusEl.textContent += '\n\nDisconnected.';
-  setButtons([['Reconnect', null, () => location.reload()]]);
-};
-</script>
 </body>
 </html>
