@@ -1,5 +1,6 @@
-import socket
-from threading import Thread
+import asyncio, os
+from websockets.asyncio.server import serve
+from websockets.exceptions import ConnectionClosed
 from domain.board import Board
 from service.game import GameService
 from errors.errors import InvalidColumn, ColumnFullError, GameServiceError
@@ -10,37 +11,31 @@ def render(board, message=""):
     return (message + "\n" + text) if message else text
 
 
-def run_game(cs, addr):
-    print("Connected from:", addr)
+async def run_game(ws):
+    print("Connected")
     board = Board()
     service = GameService(board)
 
     try:
-        cs.send(b"Choose a piece (X or O):")
+        await ws.send("Choose a piece (X or O):")
         while True:
-            data = cs.recv(1024)
-            if not data:
-                return
+            data = await ws.recv()
             try:
-                service.choose_piece(data.decode("utf-8").strip().upper())
+                service.choose_piece(data.strip().upper())
                 break
             except ValueError:
-                cs.send(b"Invalid piece. Choose a piece (Green or Red):")
+                await ws.send("Invalid piece. Choose a piece (X or O):")
 
         if service._computer_piece == "X":
             service.computer_move()
 
-        cs.send((render(board) + "\nChoose a column (1-7):").encode("utf-8"))
+        await ws.send(render(board) + "\nChoose a column (1-7):")
 
         while not service._game_over:
-            data = cs.recv(1024)
-            if not data:
-                break
-
+            data = await ws.recv()
             message = ""
             try:
-                col = int(data.decode("utf-8").strip()) - 1
-                service.make_move(col)
+                service.make_move(int(data.strip()) - 1)
             except ValueError:
                 message = "Invalid input: not an integer."
             except (InvalidColumn, ColumnFullError):
@@ -50,29 +45,25 @@ def run_game(cs, addr):
 
             if service._game_over:
                 if service._winner == "X":
-                    message = f"Game over! Winner: Green"
-                if service._winner == "O":
-                    message = f"Game over! Winner: Red"
+                    message = "Game over! Winner: Green"
+                elif service._winner == "O":
+                    message = "Game over! Winner: Red"
                 else:
                     message = "Game over! Draw!"
             else:
                 message += "\nChoose a column (1-7):"
 
-            cs.send(render(board, message.strip()).encode("utf-8"))
-    except (ConnectionResetError, BrokenPipeError):
-        print("Client dropped:", addr)
-    finally:
-        cs.close()
-        print("Closed connection with:", addr)
+            await ws.send(render(board, message.strip()))
+    except ConnectionClosed:
+        print("Client dropped")
+
+
+async def main():
+    port = int(os.environ.get("PORT", 5988))
+    async with serve(run_game, "0.0.0.0", port):
+        print("Server is waiting for connections...")
+        await asyncio.Future()
 
 
 if __name__ == "__main__":
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(("0.0.0.0", 5988))
-    s.listen(5)
-    print("Server is waiting for connections...")
-
-    while True:
-        cs, addr = s.accept()
-        Thread(target=run_game, args=(cs, addr), daemon=True).start()
+    asyncio.run(main())
