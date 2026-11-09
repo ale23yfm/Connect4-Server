@@ -1,4 +1,3 @@
-# client.py
 from websockets.sync.client import connect
 
 URL = "wss://connect4-server-5b3n.onrender.com"
