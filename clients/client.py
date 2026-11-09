@@ -1,6 +1,11 @@
 from websockets.sync.client import connect
 
-with connect("https://connect4-server-5b3n.onrender.com") as ws:
+URL = "wss://connect4-server-5b3n.onrender.com"
+
+with connect(URL, open_timeout=90) as ws:
     while True:
-        print(ws.recv())
+        msg = ws.recv()
+        print(msg)
+        if "Game over" in msg:
+            break
         ws.send(input("> "))
