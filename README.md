@@ -13,6 +13,9 @@ play.
 - Client in **Python**
 - Layered architecture: `domain` (board), `service` (game logic, AI), `errors`
 
+## Website
+``https://connect4-server-5b3n.onrender.com/``
+
 ## Test locally
 # 1. Install websockets
     pip install websockets       
