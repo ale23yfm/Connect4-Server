@@ -10,11 +10,15 @@ play.
 - Choose your piece (X or O) and your opponent:
   - **Algorithm**: rule-based (win if possible, block the opponent, else first free column)
   - **AI**: minimax with alpha-beta pruning and a positional evaluation function
-- Clients in **Python**, **PHP** (console) and **Python/tkinter**, **Java/Swing** (GUI)
+- Client in **Python**
 - Layered architecture: `domain` (board), `service` (game logic, AI), `errors`
 
-## Run
-    python3 server.py        # start the server first
-    python3 Connect4GUI.py          # tkinter GUI client
-    # or: javac Connect4GUI.java && java Connect4GUI
-    # or: php Connect4GUI.php
+## Test locally
+# 1. Install websockets
+    pip install websockets       
+# 2. Run the server
+    python server.py    
+# 3. Open in browser
+    http://localhost:5988
+    # You should see "Server is waiting for connections..." 
+    # Locally the port is 5988, because PORT isn’t set and your code falls back to that default.
