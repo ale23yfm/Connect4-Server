@@ -1,4 +1,9 @@
 import asyncio, os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 from domain.board import Board
@@ -7,6 +12,7 @@ from errors.errors import InvalidColumn, ColumnFullError, GameServiceError
 
 from http import HTTPStatus
 from pathlib import Path
+
 
 BASE = Path(__file__).parent
 FILES = {
@@ -29,17 +35,18 @@ async def run_game(ws):
             data = (await ws.recv()).strip().upper()
             if data in ("ALGORITHM", "AI"):
                 mode = data
+                service.set_mode(mode)
                 break
             await ws.send("Invalid mode. Choose mode (ALGORITHM or AI):")
 
-        await ws.send("Choose a piece (X or O):")
+        await ws.send("Choose a piece (beige or red):")
         while True:
             data = await ws.recv()
             try:
                 service.choose_piece(data.strip().upper())
                 break
             except ValueError:
-                await ws.send("Invalid piece. Choose a piece (X or O):")
+                await ws.send("Invalid piece. Choose a piece (beige or red):")
 
         if service._computer_piece == "X":
             service.computer_move()
@@ -60,7 +67,7 @@ async def run_game(ws):
 
             if service._game_over:
                 if service._winner == "X":
-                    message = "Game over! Winner: Green"
+                    message = "Game over! Winner: Beige"
                 elif service._winner == "O":
                     message = "Game over! Winner: Red"
                 else:
