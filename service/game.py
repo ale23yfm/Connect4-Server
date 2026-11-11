@@ -1,4 +1,5 @@
 from errors.errors import GameServiceError
+from service.ai import get_gemini_move
 
 class GameService:
     def __init__(self, board):
@@ -8,7 +9,23 @@ class GameService:
         self._computer_piece = None
         self._current_player = None
         self._game_over = False
+        self.mode = "ALGORITHM"
 
+    def set_mode(self, mode):
+        self.mode = mode.upper()
+
+    def _get_valid_columns(self):
+        """Returns a list of columns (0-indexed) that are not full."""
+        valid = []
+        for c in range(self._board.cols):
+            try:
+                self._board.drop_piece(c, self._computer_piece)
+                self._board.remove_piece(c)
+                valid.append(c)
+            except Exception:
+                continue
+        return valid
+    
     def choose_piece(self, piece):
         """
         Let human choose a piece to play and give the computer the other piece. It also sets the current player.
@@ -65,6 +82,34 @@ class GameService:
         if self._game_over:
             raise GameServiceError("Game already ended!")
 
+        valid_cols = self._get_valid_columns()
+        if not valid_cols:
+            if self._board.full_board():
+                self._game_over = True
+            return
+        
+        if self.mode == "AI":
+            board_str = str(self._board)
+            col = get_gemini_move(board_str, valid_cols, self._computer_piece)
+        else:
+            col = self._algorithm_move()
+        
+        if col is None:
+            if self._board.full_board():
+                self._game_over = True
+            return
+        
+        self._board.drop_piece(col, self._computer_piece)
+        
+        if self._board.check_win(self._computer_piece):
+            self._winner = self._computer_piece
+            self._game_over = True
+        elif self._board.full_board():
+            self._game_over = True
+        else:
+            self._current_player = self._human_piece
+
+    def _algorithm_move(self):
         for col in range(self._board.cols):
             try:
                 self._board.drop_piece(col, self._computer_piece)
@@ -98,3 +143,6 @@ class GameService:
 
         if self._board.full_board():
             self._game_over = True
+            
+        return None
+    

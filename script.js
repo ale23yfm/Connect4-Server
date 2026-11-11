@@ -11,7 +11,7 @@ function choosePiece(p) {
   const beige = p === 'X';
   youEl.innerHTML =
     '<span class="dot" style="background:' + (beige ? 'var(--sand)' : 'var(--red)') + '"></span>' +
-    'You are the ' + (beige ? 'beige' : 'red') + ' player (' + p + ')';
+    'You are the ' + (beige ? 'beige' : 'red');
 }
 
 function send(t) { if (ws.readyState === 1) ws.send(t); }
@@ -53,7 +53,7 @@ ws.onmessage = e => {
     setButtons([['Play with algorithm', 'ALGORITHM'], ['Play with AI', 'AI']]);
   } else if (text.includes('Choose a piece')) {
     setButtons([['Play beige', null, () => choosePiece('X')],
-            ['Play red',   null, () => choosePiece('O')]]);
+            ['Play red', null, () => choosePiece('O')]]);
   } else if (text.includes('Game over')) {
     setButtons([['Play again', null, () => location.reload()]]);
   } else if (text.includes('Choose a column')) {
